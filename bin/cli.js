@@ -15,6 +15,18 @@ var fs = require('fs'),
             'default': 8080,
             description: 'TCP port at which the files will be served'
         })
+        .option('https', {
+            description: 'Serve files over HTTPS'
+        })
+        .option('key', {
+            description: 'Path to a SSL key'
+        })
+        .option('cert', {
+            description: 'Path to a SSL certificate'
+        })
+        .option('cacert', {
+            description: 'Path to a SSL CA certificate'
+        })
         .option('host-address', {
             alias: 'a',
             'default': '127.0.0.1',
@@ -92,9 +104,16 @@ if (argv.gzip){
     (options = options || {}).gzip = true;
 }
 
+if (argv.https){
+    (options = options || {}).https = true;
+}
+
 file = new(statik.Server)(dir, options);
 
-require('http').createServer(function (request, response) {
+var httpModule = options.https ? 'https' : 'http';
+var protocol = options.https ? 'https' : 'http';
+
+require(httpModule).createServer(function (request, response) {
     request.addListener('end', function () {
         file.serve(request, response, function(e, rsp) {
             if (e && e.status === 404) {
@@ -108,4 +127,4 @@ require('http').createServer(function (request, response) {
     }).resume();
 }).listen(+argv.port, argv['host-address']);
 
-console.log('serving "' + dir + '" at http://' + argv['host-address'] + ':' + argv.port);
+console.log('serving "' + dir + '" at ' + protocol + '://' + argv['host-address'] + ':' + argv.port);
